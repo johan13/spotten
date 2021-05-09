@@ -1,0 +1,377 @@
+{
+  "bounds": [
+    -180,
+    -85.05112877980659,
+    180,
+    85.05112877980659
+  ],
+  "center": [
+    12.7881,
+    58.0416,
+    14
+  ],
+  "format": "png8",
+  "interactivity": false,
+  "minzoom": 4,
+  "maxzoom": 16,
+  "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+  "Stylesheet": [
+    "style.mss"
+  ],
+  "Layer": [
+    {
+      "geometry": "polygon",
+      "extent": [
+        -179.9999999749438,
+        -78.73290130000001,
+        179.9999999749438,
+        85.051
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from water_polygons) as water_polygons",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "-20037508.34,-14773407.41929449,20037508.34,20037508.34",
+        "dbname": "osm"
+      },
+      "id": "water_polygons",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "water_polygons",
+      "layerId": "water_polygons"
+    },
+    {
+      "geometry": "polygon",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_polygon where \"place\" in ('sea', 'ocean') or \"natural\" = 'water') as water",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "water",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "water",
+      "layerId": "water"
+    },
+    {
+      "geometry": "polygon",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_polygon where place in ('island','islet')) as island",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "island",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "island",
+      "layerId": "island"
+    },
+    {
+      "geometry": "polygon",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_polygon where \"landuse\" = 'forest' or \"natural\" = 'wood' or \"wetland\" in ('swamp', 'mangrove')) as forest",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "forest",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "forest",
+      "layerId": "forest"
+    },
+    {
+      "geometry": "polygon",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_polygon where wetland is not null) as wetland",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "wetland",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "wetland",
+      "layerId": "wetland"
+    },
+    {
+      "geometry": "linestring",
+      "extent": [
+        7.0561837999999995,
+        53.89909289916899,
+        28.0889429,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_line where \"boundary\" = 'administrative' and \"name\"='Sverige') as border",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7151068.812116616,3126846.820549337,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "border",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "border",
+      "layerId": "border"
+    },
+    {
+      "geometry": "linestring",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_line where waterway in ('river','stream','tidal_channel','canal','drain')) as waterway",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "waterway",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "waterway",
+      "layerId": "waterway"
+    },
+    {
+      "geometry": "linestring",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_line where railway in ('rail', 'construction', 'disused', 'funicular', 'light_rail', 'monorail', 'narrow_gauge', 'preserved')) as railway",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "railway",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "railway",
+      "layerId": "railway"
+    },
+    {
+      "geometry": "linestring",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_line where highway is not null) as road",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "road",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "road",
+      "layerId": "road"
+    },
+    {
+      "geometry": "polygon",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_polygon where aeroway='apron') as apron",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "apron",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "apron",
+      "layerId": "apron"
+    },
+    {
+      "geometry": "linestring",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_line where aeroway in ('taxiway','runway')) as aeroway",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "aeroway",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "aeroway",
+      "layerId": "aeroway"
+    },
+    {
+      "geometry": "polygon",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_polygon where building is not null) as building",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "building",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "building",
+      "layerId": "building"
+    },
+    {
+      "geometry": "linestring",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_line where power = 'line') as power_line",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "power_line",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "power_line",
+      "layerId": "power_line"
+    },
+    {
+      "geometry": "point",
+      "extent": [
+        7.0561837999999995,
+        55.04376249943403,
+        25.214995,
+        70.70361630140133
+      ],
+      "Datasource": {
+        "type": "postgis",
+        "table": "(select * from planet_osm_point where power in ('tower', 'portal')) as power_line",
+        "key_field": "",
+        "geometry_field": "",
+        "extent_cache": "auto",
+        "extent": "785490.7875597461,7370364.158437084,2806920.403754939,11301684.77066071",
+        "dbname": "osm"
+      },
+      "id": "power_tower",
+      "class": "",
+      "srs-name": "900913",
+      "srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
+      "advanced": {},
+      "name": "power_tower",
+      "layerId": "power_tower"
+    }
+  ],
+  "scale": 1,
+  "metatile": 2,
+  "name": "",
+  "description": ""
+}
