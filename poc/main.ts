@@ -1,20 +1,16 @@
-import { deg2rad, ft2m, kt2ms, m2nm, rad2deg } from "./conversions";
+import { deg2rad, ft2m, kt2ms, m2nm, ms2kt, rad2deg } from "./conversions";
 import { Input, renderToFile } from "./pdfGenerator";
 import { SpotCalculator } from "./spotCalculator";
 
 main();
 function main() {
     const winds = [
-        { altitude: "FL100", meters: ft2m(10000), speed: 38, direction: 340 },
-        { altitude: "2000 ft", meters: ft2m(2000), speed: 18, direction: 340 },
-        { altitude: "Ground", meters: 0, speed: 7, direction: 320 },
+        { name: "FL100", altitude: ft2m(10000), speed: kt2ms(38), direction: deg2rad(340) },
+        { name: "2000 ft", altitude: ft2m(2000), speed: kt2ms(18), direction: deg2rad(340) },
+        { name: "Ground", altitude: 0, speed: kt2ms(7), direction: deg2rad(320) },
     ];
-    const { deplCircle, exitCircle, spot } = new SpotCalculator()
-        .addWind(winds[0].meters, kt2ms(winds[0].speed), deg2rad(winds[0].direction))
-        .addWind(winds[1].meters, kt2ms(winds[1].speed), deg2rad(winds[1].direction))
-        .addWind(winds[2].meters, kt2ms(winds[2].speed), deg2rad(winds[2].direction))
-        .setAllowedLandingDirections([40, 220].map(deg2rad))
-        .calculate();
+    const { track, longitudinalOffset, transverseOffset, deplCircle, exitCircle } =
+        new SpotCalculator({ winds, allowedLandingDirections: [40, 220].map(deg2rad) }).calculate();
 
     const input: Input = {
         map: {
@@ -24,13 +20,17 @@ function main() {
             height: 1320,
             dz: { x: 930, y: 660 },
         },
-        winds,
+        winds: winds.map(w => ({
+            altitude: w.name,
+            speed: ms2kt(w.speed),
+            direction: rad2deg(w.direction),
+        })),
         exitCircle,
         deplCircle,
         spot: {
-            heading: rad2deg(spot.track),
-            longitudinalOffset: m2nm(spot.longitudinalOffset),
-            transverseOffset: m2nm(spot.transverseOffset),
+            heading: rad2deg(track),
+            longitudinalOffset: m2nm(longitudinalOffset),
+            transverseOffset: m2nm(transverseOffset),
         },
         greenLight: { bearing: 123, distance: 4.5 }, // TODO
         redLight: { bearing: 234, distance: 5.6 }, // TODO

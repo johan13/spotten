@@ -1,49 +1,29 @@
-import * as assert from "assert";
-import { kt2ms } from "./conversions";
+import { kt2ms, nm2m } from "./conversions";
+import { Wind, WindEstimator } from "./windEstimator";
 
 // Note:
-//  * All values are in meters, m/s and radians.
+//  * Units: All values are in meters, seconds, m/s and radians.
 //  * Origo is at the DZ and coordinates increase to the NE.
 //  * Angles increase clockwise from 12 o'clock.
-//  * Deployment altitude is the altitude where the canopy is fully deployed (not the SBF def).
+//  * Wind angles are opposite to other angles and refer to where the wind is *coming from*.
+//  * Deployment altitude is the altitude where the canopy is fully deployed, not the SBF def.
 
 export class SpotCalculator {
+    private readonly wind: WindEstimator;
     private readonly config: Config;
-    private readonly winds: Wind[] = [];
     private fixedTrack: number | undefined; // TODO: Not used yet
     private fixedTransverseOffset: number | undefined; // TODO: Not used yet
     private allowedLandingDirections: number[] | undefined;
 
-    public constructor(config?: Partial<Config>) {
-        this.config = { ...defaultConfig, ...config };
-    }
-
-    public addWind(altitude: number, speed: number, direction: number) {
-        this.winds.push({ altitude, speed, direction });
-        return this;
-    }
-
-    public setTrack(track: number) {
-        this.fixedTrack = track;
-        return this;
-    }
-
-    public setTransverseOffset(offset: number) {
-        this.fixedTransverseOffset = offset;
-        return this;
-    }
-
-    public setAllowedLandingDirections(directions: number[]) {
-        this.allowedLandingDirections = [...directions];
-        return this;
+    public constructor(input: Input) {
+        this.wind = new WindEstimator(input.winds);
+        this.fixedTrack = input.fixedTrack;
+        this.fixedTransverseOffset = input.fixedTransverseOffset;
+        this.allowedLandingDirections = input.allowedLandingDirections;
+        this.config = { ...defaultConfig, ...input.config };
     }
 
     public calculate(): Output {
-        if (this.winds.length < 1) {
-            throw new Error("No wind information available");
-        }
-        this.winds.sort((a, b) => a.altitude - b.altitude); // Sort by ascending altitude.
-
         const deplCircle = this.calculateDeploymentCircle();
         const { driftX, driftY, throwDistance } = this.calculateFreeFall();
         const exitCircle = { ...deplCircle };
@@ -55,16 +35,13 @@ export class SpotCalculator {
         exitCircle.y -= throwDistance * Math.cos(spot.track);
         spot.longitudinalOffset -= throwDistance;
 
-        // TODO: Compensate wind speed when not flying straight into the wind.
-        spot.longitudinalOffset -=
-            this.config.climbOutTime *
-            (this.config.jumpRunTAS - this.getWind(this.config.exitAltitude).speed);
+        spot.longitudinalOffset -= this.config.climbOutTime * this.getAircraftSOG(spot.track);
 
-        const round = (x: number) => 185.2 * Math.round(x / 185.2);
+        const round = (x: number) => nm2m(0.1) * Math.round(x / nm2m(0.1));
         spot.longitudinalOffset = round(spot.longitudinalOffset);
         spot.transverseOffset = round(spot.transverseOffset);
 
-        return { deplCircle, exitCircle, spot };
+        return { ...spot, deplCircle, exitCircle };
     }
 
     private calculateDeploymentCircle() {
@@ -75,10 +52,11 @@ export class SpotCalculator {
         let y = 0;
         let radius = 0;
         while (altitude < this.config.deplAltitude) {
-            const wind = this.getWind(altitude);
+            const wind = this.wind.at(altitude);
             x += Math.sin(wind.direction) * wind.speed * timeStep;
             y += Math.cos(wind.direction) * wind.speed * timeStep;
             if (altitude < this.config.finalAltitude) {
+                // TODO: Wind compensation / crabbing
                 x -= this.config.horizontalCanopySpeed * Math.sin(landingDirection) * timeStep;
                 y -= this.config.horizontalCanopySpeed * Math.cos(landingDirection) * timeStep;
             } else {
@@ -90,7 +68,7 @@ export class SpotCalculator {
     }
 
     private getLandingDirection() {
-        const windDirection = this.getWind(0).direction;
+        const windDirection = this.wind.at(0).direction;
         if (!this.allowedLandingDirections) {
             return windDirection;
         }
@@ -108,7 +86,7 @@ export class SpotCalculator {
         let driftX = 0;
         let driftY = 0;
         while (altitude > this.config.deplAltitude) {
-            const wind = this.getWind(altitude);
+            const wind = this.wind.at(altitude);
             driftX -= wind.speed * Math.sin(wind.direction) * timeStep;
             driftY -= wind.speed * Math.cos(wind.direction) * timeStep;
 
@@ -126,27 +104,23 @@ export class SpotCalculator {
         // TODO: A better algorithm that uses fixedTrack and fixedTransverseOffset.
         // For now do a jump run straight into the wind, down the center of the circle with
         // longitudinal offset so that we exit right where the aircraft enters the circle.
-        const track = this.getWind(this.config.exitAltitude).direction;
+        const track = this.wind.at(this.config.exitAltitude).direction;
         const transverseOffset = circle.x * Math.cos(track) - circle.y * Math.sin(track);
         const longitudinalOffset =
             circle.x * Math.sin(track) + circle.y * Math.cos(track) - circle.radius;
         return { track, longitudinalOffset, transverseOffset };
     }
 
-    private getWind(altitude: number) {
-        if (altitude <= this.winds[0].altitude || this.winds.length === 1) {
-            return this.winds[0];
-        } else if (altitude >= this.winds[this.winds.length - 1].altitude) {
-            return this.winds[this.winds.length - 1];
-        }
-        for (let i = 0; i < this.winds.length - 1; i++) {
-            const lower = this.winds[i];
-            const upper = this.winds[i + 1];
-            if (altitude >= lower.altitude && altitude <= upper.altitude) {
-                return interpolateWind(lower, upper, altitude);
-            }
-        }
-        assert.fail("Unreachable code");
+    private getAircraftSOG(track: number) {
+        // The aircraft is crabbing along the track. We split the wind into two composants: along
+        // the track and pependicular to it. The perpendicular wind is compensated by crabbing but
+        // we get a reduced speed along the track. The parallel compsant must be subtracted.
+        const wind = this.wind.at(this.config.exitAltitude);
+        const speedAlongTrack = Math.sqrt(
+            this.config.jumpRunTAS ** 2 - (wind.speed * Math.sin(wind.direction - track)) ** 2,
+        );
+        const headWind = wind.speed * Math.cos(wind.direction - track);
+        return speedAlongTrack - headWind;
     }
 }
 
@@ -164,22 +138,7 @@ function getDragAcceleration(velocity: number, altitude: number) {
     return 0.003 * airDensity * velocity ** 2;
 }
 
-function interpolateWind(lower: Wind, upper: Wind, altitude: number) {
-    // Algorithms:
-    //  * Polar: Linearly interpolate speed and direction independently.
-    //  * Cartesian: Linearly interpolate the X and Y composants independently.
-    // Polar interpolation probably makes more sense in most cases. If the directions are close to
-    // 180° from eachother then maybe cartesian mode or a hybrid of the two is a better choice?
-    // For now, do polar mode.
-    const alpha = (altitude - lower.altitude) / (upper.altitude - lower.altitude);
-    return {
-        altitude,
-        direction: lower.direction * (1 - alpha) + upper.direction * alpha,
-        speed: lower.speed * (1 - alpha) + upper.speed * alpha,
-    };
-}
-
-// Returns a - b, but always -π < (a-b) <= π.
+// Returns a - b, but always -π < (a-b) <= π. (TODO: Duplication)
 function angleDiff(a: number, b: number) {
     let delta = a - b;
     while (delta <= -Math.PI) delta += 2 * Math.PI;
@@ -189,12 +148,20 @@ function angleDiff(a: number, b: number) {
 
 const defaultConfig: Config = {
     exitAltitude: 4000,
-    deplAltitude: 800,
+    deplAltitude: 700,
     finalAltitude: 100,
-    jumpRunTAS: kt2ms(85),
+    jumpRunTAS: kt2ms(90),
     climbOutTime: 10,
     horizontalCanopySpeed: 10,
     verticalCanopySpeed: 5,
+};
+
+type Input = {
+    winds: Wind[];
+    fixedTrack?: number | undefined;
+    fixedTransverseOffset?: number;
+    allowedLandingDirections?: number[];
+    config?: Partial<Config>;
 };
 
 type Config = {
@@ -207,26 +174,16 @@ type Config = {
     verticalCanopySpeed: number;
 };
 
-type Wind = {
-    altitude: number;
-    speed: number;
-    direction: number;
+type Output = {
+    track: number;
+    longitudinalOffset: number;
+    transverseOffset: number;
+    deplCircle: Circle;
+    exitCircle: Circle;
 };
 
 type Circle = {
     x: number;
     y: number;
     radius: number;
-};
-
-type Spot = {
-    track: number;
-    longitudinalOffset: number;
-    transverseOffset: number;
-};
-
-type Output = {
-    deplCircle: Circle;
-    exitCircle: Circle;
-    spot: Spot;
 };

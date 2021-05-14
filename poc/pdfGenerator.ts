@@ -1,6 +1,6 @@
 import { createWriteStream } from "fs";
 import PDFDocument from "pdfkit";
-import { kt2ms } from "./conversions";
+import { kt2ms, nm2m } from "./conversions";
 
 export type Input = {
     map: {
@@ -160,8 +160,8 @@ class PdfGenerator {
                 .lineWidth(1)
                 .stroke("black")
                 .moveTo(0, 10)
-                .lineTo(-2, 7.5)
-                .lineTo(2, 7.5)
+                .lineTo(-1.6, 7.5)
+                .lineTo(1.6, 7.5)
                 .closePath()
                 .fill("black");
         }
@@ -257,7 +257,7 @@ class PdfGenerator {
         // Draw the arrow and green light circle
         this.doc
             .rotate(-this.data.spot.heading)
-            .translate(this.data.spot.transverseOffset * 1852, 0)
+            .translate(nm2m(this.data.spot.transverseOffset), 0)
             .moveTo(0, -2000)
             .lineTo(0, 2000)
             .moveTo(0 - 100, 2000 - 100)
@@ -265,7 +265,7 @@ class PdfGenerator {
             .lineTo(0 + 100, 2000 - 100)
             .lineWidth(25)
             .stroke()
-            .circle(0, this.data.spot.longitudinalOffset * 1852, 40)
+            .circle(0, nm2m(this.data.spot.longitudinalOffset), 40)
             .lineWidth(10)
             .stroke();
 
@@ -300,18 +300,18 @@ class PdfGenerator {
             .lineTo(1500, 0)
             .moveTo(2000, -50)
             .lineTo(2000, 0)
-            .moveTo(0.1 * 1852, 30)
-            .lineTo(0.1 * 1852, 0)
-            .moveTo(0.2 * 1852, 30)
-            .lineTo(0.2 * 1852, 0)
-            .moveTo(0.3 * 1852, 30)
-            .lineTo(0.3 * 1852, 0)
-            .moveTo(0.4 * 1852, 30)
-            .lineTo(0.4 * 1852, 0)
-            .moveTo(0.5 * 1852, 50)
-            .lineTo(0.5 * 1852, 0)
-            .moveTo(1.0 * 1852, 50)
-            .lineTo(1.0 * 1852, 0)
+            .moveTo(nm2m(0.1), 30)
+            .lineTo(nm2m(0.1), 0)
+            .moveTo(nm2m(0.2), 30)
+            .lineTo(nm2m(0.2), 0)
+            .moveTo(nm2m(0.3), 30)
+            .lineTo(nm2m(0.3), 0)
+            .moveTo(nm2m(0.4), 30)
+            .lineTo(nm2m(0.4), 0)
+            .moveTo(nm2m(0.5), 50)
+            .lineTo(nm2m(0.5), 0)
+            .moveTo(nm2m(1.0), 50)
+            .lineTo(nm2m(1.0), 0)
             .lineWidth(8)
             .stroke("black");
         // Labels
@@ -322,8 +322,8 @@ class PdfGenerator {
             .text("1 km", 900, -100, { width: 200, align: "center" })
             .text("2 km", 1900, -100, { width: 200, align: "center" })
             // .text("0 NM", -100, 60, { width: 200, align: "center" })
-            .text("0.5 NM", 0.5 * 1852 - 100, 60, { width: 200, align: "center" })
-            .text("1 NM", 1852 - 100, 60, { width: 200, align: "center" });
+            .text("0.5 NM", nm2m(0.5) - 100, 60, { width: 200, align: "center" })
+            .text("1 NM", nm2m(1) - 100, 60, { width: 200, align: "center" });
         // Scale
         this.doc.text(`1 : ${denominator}`, 0, -140);
         this.doc.restore();
@@ -332,8 +332,7 @@ class PdfGenerator {
 
 function angleStr(deg: number) {
     deg = Math.round(deg);
-    if (deg <= 0) {
-        deg += 360;
-    }
+    while (deg <= 0) deg += 360;
+    while (deg > 360) deg -= 360;
     return ("00" + deg).slice(-3) + "°";
 }
