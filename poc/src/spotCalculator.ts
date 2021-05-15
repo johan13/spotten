@@ -1,4 +1,4 @@
-import { deg2rad, kt2ms, nm2m } from "./conversions";
+import { deg2rad, kt2ms, nm2m, normalizeAngleDiff } from "./utils";
 import { Wind, WindEstimator } from "./windEstimator";
 
 // Note:
@@ -11,9 +11,9 @@ import { Wind, WindEstimator } from "./windEstimator";
 export class SpotCalculator {
     private readonly wind: WindEstimator;
     private readonly config: Config;
-    private fixedTrack: number | undefined;
-    private fixedTransverseOffset: number | undefined;
-    private allowedLandingDirections: number[] | undefined;
+    private readonly fixedTrack: number | undefined;
+    private readonly fixedTransverseOffset: number | undefined;
+    private readonly allowedLandingDirections: number[] | undefined;
 
     public constructor(input: Input) {
         this.wind = new WindEstimator(input.winds);
@@ -43,10 +43,7 @@ export class SpotCalculator {
                 this.wind.at(this.config.exitAltitude),
             ).speed;
 
-        const round = (x: number) => nm2m(0.1) * Math.round(x / nm2m(0.1));
-        spot.longitudinalOffset = round(spot.longitudinalOffset);
-        spot.transverseOffset = round(spot.transverseOffset);
-        spot.track = deg2rad(5) * Math.round(spot.track / deg2rad(5));
+        spot.longitudinalOffset = nm2m(0.1) * Math.round(spot.longitudinalOffset / nm2m(0.1));
 
         return { ...spot, deplCircle, exitCircle };
     }
@@ -84,7 +81,7 @@ export class SpotCalculator {
             return windDirection;
         }
         return this.allowedLandingDirections
-            .map(ld => ({ ld, delta: Math.abs(angleDiff(windDirection, ld)) }))
+            .map(ld => ({ ld, delta: Math.abs(normalizeAngleDiff(windDirection - ld)) }))
             .sort((a, b) => a.delta - b.delta)[0].ld;
     }
 
@@ -118,15 +115,18 @@ export class SpotCalculator {
         let track = this.fixedTrack;
         let transverseOffset = this.fixedTransverseOffset;
         if (transverseOffset === undefined) {
-            track ??= this.wind.at(this.config.exitAltitude).direction;
+            const windDirection = this.wind.at(this.config.exitAltitude).direction;
+            track ??= deg2rad(5) * Math.round(windDirection / deg2rad(5));
 
             // Find the transverseOffset that puts the track straight through the circle's center.
             transverseOffset = circle.x * Math.cos(track) - circle.y * Math.sin(track);
+            transverseOffset = nm2m(0.1) * Math.round(transverseOffset / nm2m(0.1));
         } else if (track === undefined) {
             // Find the direction that puts the track straight through the circle's center.
             track =
                 Math.atan2(circle.x, circle.y) -
                 Math.asin(transverseOffset / Math.sqrt(circle.x ** 2 + circle.y ** 2));
+            track = deg2rad(5) * Math.round(track / deg2rad(5));
         }
 
         // Find the longitudinalOffset that puts the exit point right at the edge of the circle.
@@ -164,20 +164,12 @@ function getDragAcceleration(velocity: number, altitude: number) {
     // We combine everything except the air density (rho) and velocity (v) into a single
     // coefficient. 0.003 m²/kg was chosen to give a terminal velocity of 199 km/h at 1200 m
     // AMSL. (The same altitude used in L&B's SAS calculations.) The DZ is assumed to be at sea
-    // level.The air density equation is from
+    // level. The air density equation is from
     // https://en.wikipedia.org/wiki/Barometric_formula#Density_equations
     const airDensity =
         1.225 *
         (288.15 / (288.15 - 0.0065 * altitude)) ** (1 - (9.81 * 0.0289644) / 8.3144598 / 0.0065);
     return 0.003 * airDensity * velocity ** 2;
-}
-
-// Returns a - b, but always -π < (a-b) <= π. (TODO: Duplication)
-function angleDiff(a: number, b: number) {
-    let delta = a - b;
-    while (delta <= -Math.PI) delta += 2 * Math.PI;
-    while (delta > Math.PI) delta -= 2 * Math.PI;
-    return delta;
 }
 
 const defaultConfig: Config = {

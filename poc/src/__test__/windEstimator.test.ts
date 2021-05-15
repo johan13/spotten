@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { deg2rad } from "../conversions";
+import { deg2rad } from "../utils";
 import { WindEstimator } from "../windEstimator";
 import { assertApprox } from "./utils";
 

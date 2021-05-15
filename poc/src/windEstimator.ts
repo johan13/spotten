@@ -1,3 +1,5 @@
+import { normalizeAngle, normalizeAngleDiff } from "./utils";
+
 export class WindEstimator {
     private readonly winds: Wind[];
 
@@ -29,12 +31,8 @@ export class WindEstimator {
         // For now, do polar interpolation.
         const alpha = (altitude - lower.altitude) / (upper.altitude - lower.altitude);
         const speed = (1 - alpha) * lower.speed + alpha * upper.speed;
-        let angleDiff = upper.direction - lower.direction;
-        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        let direction = lower.direction + alpha * angleDiff;
-        while (direction < 0) direction += 2 * Math.PI;
-        while (direction >= 2 * Math.PI) direction -= 2 * Math.PI;
+        const angleDiff = normalizeAngleDiff(upper.direction - lower.direction);
+        const direction = normalizeAngle(lower.direction + alpha * angleDiff);
         return { altitude, direction, speed };
     }
 }

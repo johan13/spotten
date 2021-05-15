@@ -1,6 +1,6 @@
-import { deg2rad, ft2m, kt2ms, m2nm, ms2kt, rad2deg } from "./conversions";
 import { Input, renderToFile } from "./pdfGenerator";
 import { SpotCalculator } from "./spotCalculator";
+import { deg2rad, ft2m, kt2ms, m2nm, ms2kt, rad2deg } from "./utils";
 
 main();
 function main() {
@@ -32,8 +32,7 @@ function main() {
             longitudinalOffset: m2nm(longitudinalOffset),
             transverseOffset: m2nm(transverseOffset),
         },
-        greenLight: { bearing: 123, distance: 4.5 }, // TODO
-        redLight: { bearing: 234, distance: 5.6 }, // TODO
+        redLight: { bearing: 123, distance: 4.5 }, // TODO
         time: new Date(),
     };
     renderToFile(input, "spot.pdf");

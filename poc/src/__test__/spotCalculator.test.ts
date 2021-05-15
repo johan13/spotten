@@ -1,6 +1,6 @@
 import * as assert from "assert";
-import { kt2ms } from "../conversions";
 import { SpotCalculator } from "../spotCalculator";
+import { kt2ms } from "../utils";
 import { assertApprox } from "./utils";
 
 describe("SpotCalculator", () => {

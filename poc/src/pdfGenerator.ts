@@ -1,6 +1,6 @@
 import { createWriteStream } from "fs";
 import PDFDocument from "pdfkit";
-import { kt2ms, nm2m } from "./conversions";
+import { kt2ms, nm2m } from "./utils";
 
 export type Input = {
     map: {
@@ -29,8 +29,12 @@ export type Input = {
         longitudinalOffset: number; // Nautical miles, positive past DZ
         transverseOffset: number; // Nautical miles, positive when right off track
     };
-    greenLight: BearingAndDistance; // Rendered in small font in the upper right corner
-    redLight: BearingAndDistance; // Rendered in small font in the upper right corner
+    redLight: {
+        /** Degrees to aircraft from DZ */
+        bearing: number;
+        /** Nautical miles */
+        distance: number;
+    };
     time: Date;
 };
 
@@ -43,22 +47,15 @@ type Circle = {
     radius: number;
 };
 
-type BearingAndDistance = {
-    /** Degrees to aircraft from DZ */
-    bearing: number;
-    /** Nautical miles */
-    distance: number;
-};
-
 export function renderToFile(input: Input, filePath: string) {
     new PdfGenerator(input, createWriteStream(filePath));
 }
 
 class PdfGenerator {
     private readonly mapScaleDenominator = 25000;
-    private doc: typeof PDFDocument;
-    private width: number;
-    private height: number;
+    private readonly doc: typeof PDFDocument;
+    private readonly width: number;
+    private readonly height: number;
     private pilotInfoWidth = 0;
     private pilotInfoHeight = 0;
     private windInfoWidth = 0;
@@ -91,7 +88,6 @@ class PdfGenerator {
     private renderPilotInfo() {
         const {
             spot: { heading, transverseOffset, longitudinalOffset },
-            greenLight: green,
             redLight: red,
         } = this.data;
 
@@ -107,9 +103,8 @@ class PdfGenerator {
             this.doc.text(`${side} off track  ${distance} NM`);
         }
         this.doc
-            .fontSize(3)
+            .fontSize(3.5)
             .font("Courier")
-            .text(`Green light: ${angleStr(green.bearing)} / ${green.distance.toFixed(1)} NM`)
             .text(`Red light:   ${angleStr(red.bearing)} / ${red.distance.toFixed(1)} NM`);
         this.pilotInfoHeight = this.doc.y;
     }
@@ -334,5 +329,5 @@ function angleStr(deg: number) {
     deg = Math.round(deg);
     while (deg <= 0) deg += 360;
     while (deg > 360) deg -= 360;
-    return ("00" + deg).slice(-3) + "°";
+    return `00${deg}`.slice(-3) + "°";
 }
