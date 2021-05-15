@@ -20,7 +20,7 @@ Add these configurations to launch.json (inside the `configurations` array):
     ],
     "cwd": "${workspaceFolder}/poc",
     "runtimeArgs": ["-r", "ts-node/register"],
-    "program": "main.ts"
+    "program": "src/main.ts"
 },
 {
     "type": "pwa-node",

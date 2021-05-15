@@ -94,8 +94,11 @@ export class SpotCalculator {
             const dragAccel = getDragAcceleration(velocity, altitude);
             throwDistance += horizontalVelocity * timeStep;
             altitude -= verticalVelocity * timeStep;
-            horizontalVelocity -= (horizontalVelocity / velocity) * dragAccel * timeStep;
-            verticalVelocity += (9.81 - (verticalVelocity / velocity) * dragAccel) * timeStep;
+            if (velocity > 0) {
+                horizontalVelocity -= (horizontalVelocity / velocity) * dragAccel * timeStep;
+                verticalVelocity -= (verticalVelocity / velocity) * dragAccel * timeStep;
+            }
+            verticalVelocity += 9.81 * timeStep;
         }
         return { driftX, driftY, throwDistance };
     }
