@@ -1,4 +1,4 @@
-import { kt2ms, nm2m } from "./conversions";
+import { deg2rad, kt2ms, nm2m } from "./conversions";
 import { Wind, WindEstimator } from "./windEstimator";
 
 // Note:
@@ -11,8 +11,8 @@ import { Wind, WindEstimator } from "./windEstimator";
 export class SpotCalculator {
     private readonly wind: WindEstimator;
     private readonly config: Config;
-    private fixedTrack: number | undefined; // TODO: Not used yet
-    private fixedTransverseOffset: number | undefined; // TODO: Not used yet
+    private fixedTrack: number | undefined;
+    private fixedTransverseOffset: number | undefined;
     private allowedLandingDirections: number[] | undefined;
 
     public constructor(input: Input) {
@@ -46,6 +46,7 @@ export class SpotCalculator {
         const round = (x: number) => nm2m(0.1) * Math.round(x / nm2m(0.1));
         spot.longitudinalOffset = round(spot.longitudinalOffset);
         spot.transverseOffset = round(spot.transverseOffset);
+        spot.track = deg2rad(5) * Math.round(spot.track / deg2rad(5));
 
         return { ...spot, deplCircle, exitCircle };
     }
@@ -114,20 +115,36 @@ export class SpotCalculator {
     }
 
     private calculateSpot(circle: Circle) {
-        // TODO: A better algorithm that uses fixedTrack and fixedTransverseOffset.
-        // For now do a jump run straight into the wind, down the center of the circle with
-        // longitudinal offset so that we exit right where the aircraft enters the circle.
-        const track = this.wind.at(this.config.exitAltitude).direction;
-        const transverseOffset = circle.x * Math.cos(track) - circle.y * Math.sin(track);
-        const longitudinalOffset =
-            circle.x * Math.sin(track) + circle.y * Math.cos(track) - circle.radius;
+        let track = this.fixedTrack;
+        let transverseOffset = this.fixedTransverseOffset;
+        if (transverseOffset === undefined) {
+            track ??= this.wind.at(this.config.exitAltitude).direction;
+
+            // Find the transverseOffset that puts the track straight through the circle's center.
+            transverseOffset = circle.x * Math.cos(track) - circle.y * Math.sin(track);
+        } else if (track === undefined) {
+            // Find the direction that puts the track straight through the circle's center.
+            track =
+                Math.atan2(circle.x, circle.y) -
+                Math.asin(transverseOffset / Math.sqrt(circle.x ** 2 + circle.y ** 2));
+        }
+
+        // Find the longitudinalOffset that puts the exit point right at the edge of the circle.
+        const dx = circle.x - transverseOffset * Math.cos(track);
+        const dy = circle.y + transverseOffset * Math.sin(track);
+        const k = dx * Math.sin(track) + dy * Math.cos(track);
+        const longitudinalOffset = k - Math.sqrt(k ** 2 - dx ** 2 - dy ** 2 + circle.radius ** 2);
+        if (isNaN(longitudinalOffset)) {
+            throw new Error("The jump run does not intersect the exit circle");
+        }
+
         return { track, longitudinalOffset, transverseOffset };
     }
 }
 
 function getSpeedOverGround(track: number, tas: number, wind: Wind) {
     // The aircraft/canopy is crabbing along the track. We split the wind into two composants: along
-    // the track and pependicular to it. The perpendicular wind is compensated by crabbing but
+    // the track and perpendicular to it. The perpendicular wind is compensated by crabbing but
     // we get a reduced speed along the track. The parallel composant must be subtracted.
     const speedAlongTrack = Math.sqrt(
         tas ** 2 - (wind.speed * Math.sin(wind.direction - track)) ** 2,
