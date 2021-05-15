@@ -35,7 +35,13 @@ export class SpotCalculator {
         exitCircle.y -= throwDistance * Math.cos(spot.track);
         spot.longitudinalOffset -= throwDistance;
 
-        spot.longitudinalOffset -= this.config.climbOutTime * this.getAircraftSOG(spot.track);
+        spot.longitudinalOffset -=
+            this.config.climbOutTime *
+            getSpeedOverGround(
+                spot.track,
+                this.config.jumpRunTAS,
+                this.wind.at(this.config.exitAltitude),
+            ).speed;
 
         const round = (x: number) => nm2m(0.1) * Math.round(x / nm2m(0.1));
         spot.longitudinalOffset = round(spot.longitudinalOffset);
@@ -56,9 +62,13 @@ export class SpotCalculator {
             x += Math.sin(wind.direction) * wind.speed * timeStep;
             y += Math.cos(wind.direction) * wind.speed * timeStep;
             if (altitude < this.config.finalAltitude) {
-                // TODO: Wind compensation / crabbing
-                x -= this.config.horizontalCanopySpeed * Math.sin(landingDirection) * timeStep;
-                y -= this.config.horizontalCanopySpeed * Math.cos(landingDirection) * timeStep;
+                const { speed, direction } = getSpeedOverGround(
+                    landingDirection,
+                    this.config.horizontalCanopySpeed,
+                    wind,
+                );
+                x -= speed * Math.sin(direction) * timeStep;
+                y -= speed * Math.cos(direction) * timeStep;
             } else {
                 radius += this.config.horizontalCanopySpeed * timeStep;
             }
@@ -113,17 +123,21 @@ export class SpotCalculator {
             circle.x * Math.sin(track) + circle.y * Math.cos(track) - circle.radius;
         return { track, longitudinalOffset, transverseOffset };
     }
+}
 
-    private getAircraftSOG(track: number) {
-        // The aircraft is crabbing along the track. We split the wind into two composants: along
-        // the track and pependicular to it. The perpendicular wind is compensated by crabbing but
-        // we get a reduced speed along the track. The parallel composant must be subtracted.
-        const wind = this.wind.at(this.config.exitAltitude);
-        const speedAlongTrack = Math.sqrt(
-            this.config.jumpRunTAS ** 2 - (wind.speed * Math.sin(wind.direction - track)) ** 2,
-        );
+function getSpeedOverGround(track: number, tas: number, wind: Wind) {
+    // The aircraft/canopy is crabbing along the track. We split the wind into two composants: along
+    // the track and pependicular to it. The perpendicular wind is compensated by crabbing but
+    // we get a reduced speed along the track. The parallel composant must be subtracted.
+    const speedAlongTrack = Math.sqrt(
+        tas ** 2 - (wind.speed * Math.sin(wind.direction - track)) ** 2,
+    );
+    if (isNaN(speedAlongTrack)) {
+        // Too high wind to fly the track - fly (backwards) into the wind instead.
+        return { speed: tas - wind.speed, direction: wind.direction };
+    } else {
         const headWind = wind.speed * Math.cos(wind.direction - track);
-        return speedAlongTrack - headWind;
+        return { speed: speedAlongTrack - headWind, direction: track };
     }
 }
 
