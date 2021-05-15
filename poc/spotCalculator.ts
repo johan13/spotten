@@ -3,7 +3,7 @@ import { Wind, WindEstimator } from "./windEstimator";
 
 // Note:
 //  * Units: All values are in meters, seconds, m/s and radians.
-//  * Origo is at the DZ and coordinates increase to the NE.
+//  * The origin is at the DZ and coordinates increase to the northeast.
 //  * Angles increase clockwise from 12 o'clock.
 //  * Wind angles are opposite to other angles and refer to where the wind is *coming from*.
 //  * Deployment altitude is the altitude where the canopy is fully deployed, not the SBF def.
@@ -114,7 +114,7 @@ export class SpotCalculator {
     private getAircraftSOG(track: number) {
         // The aircraft is crabbing along the track. We split the wind into two composants: along
         // the track and pependicular to it. The perpendicular wind is compensated by crabbing but
-        // we get a reduced speed along the track. The parallel compsant must be subtracted.
+        // we get a reduced speed along the track. The parallel composant must be subtracted.
         const wind = this.wind.at(this.config.exitAltitude);
         const speedAlongTrack = Math.sqrt(
             this.config.jumpRunTAS ** 2 - (wind.speed * Math.sin(wind.direction - track)) ** 2,
@@ -125,8 +125,8 @@ export class SpotCalculator {
 }
 
 function getDragAcceleration(velocity: number, altitude: number) {
-    // From https://en.wikipedia.org/wiki/Drag_equation (and Newton's second law):
-    // a_drag = F_drag / m = 1/2 * rho * v² * C_d * A / m
+    // The drag equation (https://en.wikipedia.org/wiki/Drag_equation) and Newton's second law give:
+    //  a_drag = F_drag / m = 1/2 * rho * v² * C_d * A / m
     // We combine everything except the air density (rho) and velocity (v) into a single
     // coefficient. 0.003 m²/kg was chosen to give a terminal velocity of 199 km/h at 1200 m
     // AMSL. (The same altitude used in L&B's SAS calculations.) The DZ is assumed to be at sea
