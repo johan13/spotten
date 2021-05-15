@@ -32,7 +32,9 @@ export class WindEstimator {
         let angleDiff = upper.direction - lower.direction;
         while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
         while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        const direction = lower.direction + alpha * angleDiff;
+        let direction = lower.direction + alpha * angleDiff;
+        while (direction < 0) direction += 2 * Math.PI;
+        while (direction >= 2 * Math.PI) direction -= 2 * Math.PI;
         return { altitude, direction, speed };
     }
 }
