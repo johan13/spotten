@@ -158,7 +158,7 @@ export class SpotCalculator {
             this.config.metersBetweenGroups /
             (getSpeedOverGround(track, this.config.jumpRunTAS, exitWind).speed +
                 deplWind.speed * Math.cos(deplWind.direction - track));
-        return Math.round(Math.max(this.config.minTimeBetweenGroups, timeBetweenGroups));
+        return Math.ceil(Math.max(this.config.minTimeBetweenGroups, timeBetweenGroups));
     }
 }
 
@@ -199,8 +199,8 @@ const defaultConfig: Config = {
     jumpRunTAS: kt2ms(90),
     redLightTime: 120,
     greenLightTime: 10,
-    horizontalCanopySpeed: 10,
-    verticalCanopySpeed: 5,
+    horizontalCanopySpeed: 9,
+    verticalCanopySpeed: 4,
     metersBetweenGroups: 250,
     minTimeBetweenGroups: 5,
 };
