@@ -51,7 +51,7 @@ class PdfGenerator {
 
         const offsetStr = (longitudinalOffset > 0 ? "+" : "") + longitudinalOffset.toFixed(1);
         const line1 = `Green light ${angleStr(heading)}  ${offsetStr} NM`;
-        this.doc.fontSize(7).text(line1, 0, 0);
+        this.doc.fontSize(6).text(line1, 0, 0);
         this.pilotInfoWidth = this.doc.widthOfString(line1) + 0.5;
         if (transverseOffset !== 0) {
             const side = transverseOffset > 0 ? "Right" : "Left";
@@ -239,38 +239,26 @@ class PdfGenerator {
             .save()
             .translate(this.width, this.height - this.footerHeight)
             .scale(1000 / this.mapScaleDenominator)
-            .translate(-2100, -150);
-
-        // Semitransparent background.
-        this.doc
-            .rect(-20, -150, 2120, 300)
-            .fillOpacity(0.4)
-            .fill("white")
-            .fillOpacity(1)
-            .fillColor("black");
+            .translate(-1120, -150);
 
         // Tick marks
         this.doc
             .moveTo(0, 0)
-            .lineTo(2000, 0)
+            .lineTo(1000, 0)
             .moveTo(0, -50)
             .lineTo(0, 50)
-            .moveTo(100, -25)
+            .moveTo(100, -30)
             .lineTo(100, 0)
-            .moveTo(200, -25)
+            .moveTo(200, -30)
             .lineTo(200, 0)
-            .moveTo(300, -25)
+            .moveTo(300, -30)
             .lineTo(300, 0)
-            .moveTo(400, -25)
+            .moveTo(400, -30)
             .lineTo(400, 0)
-            .moveTo(500, -40)
+            .moveTo(500, -50)
             .lineTo(500, 0)
             .moveTo(1000, -50)
             .lineTo(1000, 0)
-            .moveTo(1500, -40)
-            .lineTo(1500, 0)
-            .moveTo(2000, -50)
-            .lineTo(2000, 0)
             .moveTo(nm2m(0.1), 30)
             .lineTo(nm2m(0.1), 0)
             .moveTo(nm2m(0.2), 30)
@@ -281,19 +269,16 @@ class PdfGenerator {
             .lineTo(nm2m(0.4), 0)
             .moveTo(nm2m(0.5), 50)
             .lineTo(nm2m(0.5), 0)
-            .moveTo(nm2m(1.0), 50)
-            .lineTo(nm2m(1.0), 0)
             .lineWidth(8)
             .stroke("black");
         // Labels
         this.doc
             .fontSize(70)
-            .text("1 km", 1000 - 200, -100, { width: 400, align: "center" })
-            .text("2 km", 2000 - 200, -100, { width: 400, align: "center" })
-            .text("0.5 NM", nm2m(0.5) - 200, 60, { width: 400, align: "center" })
-            .text("1 NM", nm2m(1) - 200, 60, { width: 400, align: "center" });
+            .text("500 m", 500 - 200, -110, { width: 400, align: "center" })
+            .text("1 km", 1000 - 200, -110, { width: 400, align: "center" })
+            .text("0.5 NM", nm2m(0.5) - 200, 60, { width: 400, align: "center" });
         // Scale
-        this.doc.text(`1 : ${denominator}`, 0, -125);
+        this.doc.text(`1 : ${denominator}`, -500, -20, { align: "right", width: 460 });
         this.doc.restore();
     }
 }

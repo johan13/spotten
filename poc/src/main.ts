@@ -26,10 +26,10 @@ function main() {
     const input: Input = {
         map: {
             path: "maps/vårgårda.png",
-            metersPerPixel: 4,
-            width: 1860,
-            height: 1320,
-            dz: { x: 930, y: 660 },
+            metersPerPixel: 5,
+            width: 1436,
+            height: 1000,
+            dz: { x: 718, y: 500 },
         },
         winds: winds.map(w => ({
             altitudeDescr: w.name,
