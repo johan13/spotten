@@ -1,4 +1,4 @@
-import { deg2rad, kt2ms, nm2m, normalizeAngleDiff } from "./utils";
+import { deg2rad, kt2ms, nm2m, normalizeAngle, normalizeAngleDiff } from "./utils";
 import { Wind, WindEstimator } from "./windEstimator";
 
 // Note:
@@ -35,17 +35,26 @@ export class SpotCalculator {
         exitCircle.y -= throwDistance * Math.cos(spot.track);
         spot.longitudinalOffset -= throwDistance;
 
-        spot.longitudinalOffset -=
-            this.config.climbOutTime *
-            getSpeedOverGround(
-                spot.track,
-                this.config.jumpRunTAS,
-                this.wind.at(this.config.exitAltitude),
-            ).speed;
+        const exitWind = this.wind.at(this.config.exitAltitude);
+        const sog = getSpeedOverGround(spot.track, this.config.jumpRunTAS, exitWind).speed;
+        const redLight = {
+            bearing: normalizeAngle(spot.track + Math.PI),
+            distance: spot.longitudinalOffset + this.config.redLightTime * sog,
+        };
 
+        spot.longitudinalOffset -= this.config.greenLightTime * sog;
         spot.longitudinalOffset = nm2m(0.1) * Math.round(spot.longitudinalOffset / nm2m(0.1));
 
-        return { ...spot, deplCircle, exitCircle };
+        return {
+            track: spot.track,
+            longitudinalOffset: spot.longitudinalOffset,
+            transverseOffset: spot.transverseOffset,
+            deplCircle,
+            exitCircle,
+            redLight,
+            timeBetweenGroups: this.getTimeBetweenGroups(spot.track),
+            jumpRunDuration: sog > 0 ? spot.jumpRunLength / sog : 0,
+        };
     }
 
     private calculateDeploymentCircle() {
@@ -126,19 +135,30 @@ export class SpotCalculator {
             track =
                 Math.atan2(circle.x, circle.y) -
                 Math.asin(transverseOffset / Math.sqrt(circle.x ** 2 + circle.y ** 2));
-            track = deg2rad(5) * Math.round(track / deg2rad(5));
+            track = deg2rad(5) * Math.round(normalizeAngle(track) / deg2rad(5));
         }
 
         // Find the longitudinalOffset that puts the exit point right at the edge of the circle.
         const dx = circle.x - transverseOffset * Math.cos(track);
         const dy = circle.y + transverseOffset * Math.sin(track);
-        const k = dx * Math.sin(track) + dy * Math.cos(track);
-        const longitudinalOffset = k - Math.sqrt(k ** 2 - dx ** 2 - dy ** 2 + circle.radius ** 2);
+        const midJumpRun = dx * Math.sin(track) + dy * Math.cos(track);
+        const halfJumpRun = Math.sqrt(midJumpRun ** 2 - dx ** 2 - dy ** 2 + circle.radius ** 2);
+        const longitudinalOffset = midJumpRun - halfJumpRun;
         if (isNaN(longitudinalOffset)) {
             throw new Error("The jump run does not intersect the exit circle");
         }
 
-        return { track, longitudinalOffset, transverseOffset };
+        return { track, longitudinalOffset, transverseOffset, jumpRunLength: 2 * halfJumpRun };
+    }
+
+    private getTimeBetweenGroups(track: number) {
+        const exitWind = this.wind.at(this.config.exitAltitude);
+        const deplWind = this.wind.at(this.config.deplAltitude);
+        const timeBetweenGroups =
+            this.config.metersBetweenGroups /
+            (getSpeedOverGround(track, this.config.jumpRunTAS, exitWind).speed +
+                deplWind.speed * Math.cos(deplWind.direction - track));
+        return Math.round(Math.max(this.config.minTimeBetweenGroups, timeBetweenGroups));
     }
 }
 
@@ -177,9 +197,12 @@ const defaultConfig: Config = {
     deplAltitude: 700,
     finalAltitude: 100,
     jumpRunTAS: kt2ms(90),
-    climbOutTime: 10,
+    redLightTime: 120,
+    greenLightTime: 10,
     horizontalCanopySpeed: 10,
     verticalCanopySpeed: 5,
+    metersBetweenGroups: 250,
+    minTimeBetweenGroups: 5,
 };
 
 type Input = {
@@ -195,9 +218,12 @@ type Config = {
     deplAltitude: number;
     finalAltitude: number;
     jumpRunTAS: number;
-    climbOutTime: number;
+    redLightTime: number;
+    greenLightTime: number;
     horizontalCanopySpeed: number;
     verticalCanopySpeed: number;
+    metersBetweenGroups: number;
+    minTimeBetweenGroups: number;
 };
 
 type Output = {
@@ -206,6 +232,9 @@ type Output = {
     transverseOffset: number;
     deplCircle: Circle;
     exitCircle: Circle;
+    redLight: { bearing: number; distance: number };
+    timeBetweenGroups: number;
+    jumpRunDuration: number;
 };
 
 type Circle = {

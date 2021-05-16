@@ -2,51 +2,6 @@ import { createWriteStream } from "fs";
 import PDFDocument from "pdfkit";
 import { kt2ms, nm2m } from "./utils";
 
-export type Input = {
-    map: {
-        /** JPEG or PNG */
-        path: string;
-        metersPerPixel: number;
-        /** Pixels */
-        width: number;
-        /** Pixels */
-        height: number;
-        /** Drop zone position in pixels relative to top left. */
-        dz: { x: number; y: number };
-    };
-    winds: Array<{
-        /** Descriptive string. E.g. "FL100" */
-        altitude: string;
-        /** Knots (TODO: Why knots?) */
-        speed: number;
-        /** Degrees where the wind is coming from. */
-        direction: number;
-    }>;
-    exitCircle: Circle;
-    deplCircle: Circle;
-    spot: {
-        heading: number; // Degrees
-        longitudinalOffset: number; // Nautical miles, positive past DZ
-        transverseOffset: number; // Nautical miles, positive when right off track
-    };
-    redLight: {
-        /** Degrees to aircraft from DZ */
-        bearing: number;
-        /** Nautical miles */
-        distance: number;
-    };
-    time: Date;
-};
-
-type Circle = {
-    /** Meters relative to DZ */
-    x: number;
-    /** Meters relative to DZ */
-    y: number;
-    /** Meters */
-    radius: number;
-};
-
 export function renderToFile(input: Input, filePath: string) {
     new PdfGenerator(input, createWriteStream(filePath));
 }
@@ -60,6 +15,8 @@ class PdfGenerator {
     private pilotInfoHeight = 0;
     private windInfoWidth = 0;
     private windInfoHeight = 0;
+    private jumperInfoWidth = 0;
+    private jumperInfoHeight = 0;
     private footerWidth = 0;
     private footerHeight = 0;
 
@@ -79,6 +36,7 @@ class PdfGenerator {
 
         this.renderPilotInfo();
         this.renderWinds();
+        this.renderJumperInfo();
         this.renderFooter();
         this.renderMap();
 
@@ -91,32 +49,29 @@ class PdfGenerator {
             redLight: red,
         } = this.data;
 
-        const after = 0.1 * Math.round(longitudinalOffset * 10);
-        const right = 0.1 * Math.round(transverseOffset * 10);
-        const offsetStr = (after > 0 ? "+" : "") + after.toFixed(1);
+        const offsetStr = (longitudinalOffset > 0 ? "+" : "") + longitudinalOffset.toFixed(1);
         const line1 = `Green light ${angleStr(heading)}  ${offsetStr} NM`;
         this.doc.fontSize(7).text(line1, 0, 0);
         this.pilotInfoWidth = this.doc.widthOfString(line1) + 0.5;
-        if (right !== 0) {
-            const side = right > 0 ? "Right" : "Left";
-            const distance = Math.abs(right).toFixed(1);
+        if (transverseOffset !== 0) {
+            const side = transverseOffset > 0 ? "Right" : "Left";
+            const distance = Math.abs(transverseOffset).toFixed(1);
             this.doc.text(`${side} off track  ${distance} NM`);
         }
         this.doc
-            .fontSize(3.5)
-            .font("Courier")
-            .text(`Red light:   ${angleStr(red.bearing)} / ${red.distance.toFixed(1)} NM`);
+            .fontSize(3)
+            .text(`Red light:  ${angleStr(red.bearing)}  ${red.distance.toFixed(1)} NM`);
         this.pilotInfoHeight = this.doc.y;
     }
 
     private renderWinds() {
-        this.doc.font("Helvetica").fontSize(3);
+        this.doc.fontSize(3);
         const winds = [...this.data.winds].reverse();
         this.windInfoHeight = 0;
         this.windInfoWidth = 21;
         this.doc.save();
         this.doc.translate(0, this.height);
-        for (const { altitude, speed, direction } of winds) {
+        for (const { altitudeDescr: altitude, speed, direction } of winds) {
             this.windInfoHeight += 25;
             this.doc.translate(0, -25);
             this.doc.fontSize(3);
@@ -141,10 +96,7 @@ class PdfGenerator {
 
         // Numeric wind speed
         const ms = kt2ms(knots);
-        this.doc
-            .font("Helvetica")
-            .fontSize(4)
-            .text(ms.toFixed(0), -5, -1.5, { width: 10, align: "center" });
+        this.doc.fontSize(4).text(ms.toFixed(0), -5, -1.5, { width: 10, align: "center" });
 
         // Wind arrow
         if (ms >= 0.5) {
@@ -163,6 +115,18 @@ class PdfGenerator {
         this.doc.restore();
     }
 
+    private renderJumperInfo() {
+        this.doc.fontSize(5);
+        const text = `Time between groups: ${this.data.timeBetweenGroups} s`;
+        this.jumperInfoWidth = this.doc.widthOfString(text) + 0.5;
+        this.jumperInfoHeight = 9.5;
+
+        this.doc
+            .text(text, this.windInfoWidth, this.height - this.jumperInfoHeight + 1)
+            .fontSize(3)
+            .text(`The jump run is approximately ${this.data.jumpRunDuration.toFixed(0)} s.`);
+    }
+
     private renderFooter() {
         const time = Intl.DateTimeFormat("sv-SE", {
             year: "numeric",
@@ -172,11 +136,11 @@ class PdfGenerator {
             minute: "numeric",
         }).format(this.data.time);
         const fullText = `${time}     spotten.nu     Map: © OpenStreetMap contributors`;
-        this.doc.font("Helvetica").fontSize(3);
+        this.doc.fontSize(3);
         const w = this.doc.widthOfString(fullText);
         const h = this.doc.heightOfString(fullText);
         this.doc
-            .text(time + "     ", this.width - w - 0.2, this.height - h + 0.9, { continued: true })
+            .text(time + "     ", this.width - w - 0.3, this.height - h + 0.7, { continued: true })
             .text("spotten.nu", { link: "https://spotten.nu/", continued: true })
             .text("     Map: © ", { link: null as unknown as string, continued: true })
             .text("OpenStreetMap", {
@@ -217,7 +181,9 @@ class PdfGenerator {
             .lineTo(this.width, this.height - this.footerHeight)
             .lineTo(this.width - this.footerWidth, this.height - this.footerHeight)
             .lineTo(this.width - this.footerWidth, this.height)
-            .lineTo(this.windInfoWidth, this.height)
+            .lineTo(this.windInfoWidth + this.jumperInfoWidth, this.height)
+            .lineTo(this.windInfoWidth + this.jumperInfoWidth, this.height - this.jumperInfoHeight)
+            .lineTo(this.windInfoWidth, this.height - this.jumperInfoHeight)
             .lineTo(this.windInfoWidth, this.height - this.windInfoHeight)
             .lineTo(0, this.height - this.windInfoHeight)
             .lineTo(0, this.pilotInfoHeight)
@@ -271,8 +237,18 @@ class PdfGenerator {
         const denominator = Intl.NumberFormat("sv-SE").format(this.mapScaleDenominator);
         this.doc
             .save()
-            .translate(this.windInfoWidth + 5, this.height - 5)
-            .scale(1000 / this.mapScaleDenominator);
+            .translate(this.width, this.height - this.footerHeight)
+            .scale(1000 / this.mapScaleDenominator)
+            .translate(-2100, -150);
+
+        // Semitransparent background.
+        this.doc
+            .rect(-20, -150, 2120, 300)
+            .fillOpacity(0.4)
+            .fill("white")
+            .fillOpacity(1)
+            .fillColor("black");
+
         // Tick marks
         this.doc
             .moveTo(0, 0)
@@ -311,16 +287,13 @@ class PdfGenerator {
             .stroke("black");
         // Labels
         this.doc
-            .fontSize(60)
-            .font("Helvetica")
-            // .text("0 km", -100, -100, { width: 200, align: "center" })
-            .text("1 km", 900, -100, { width: 200, align: "center" })
-            .text("2 km", 1900, -100, { width: 200, align: "center" })
-            // .text("0 NM", -100, 60, { width: 200, align: "center" })
-            .text("0.5 NM", nm2m(0.5) - 100, 60, { width: 200, align: "center" })
-            .text("1 NM", nm2m(1) - 100, 60, { width: 200, align: "center" });
+            .fontSize(70)
+            .text("1 km", 1000 - 200, -100, { width: 400, align: "center" })
+            .text("2 km", 2000 - 200, -100, { width: 400, align: "center" })
+            .text("0.5 NM", nm2m(0.5) - 200, 60, { width: 400, align: "center" })
+            .text("1 NM", nm2m(1) - 200, 60, { width: 400, align: "center" });
         // Scale
-        this.doc.text(`1 : ${denominator}`, 0, -140);
+        this.doc.text(`1 : ${denominator}`, 0, -125);
         this.doc.restore();
     }
 }
@@ -331,3 +304,38 @@ function angleStr(deg: number) {
     while (deg > 360) deg -= 360;
     return `00${deg}`.slice(-3) + "°";
 }
+
+export type Input = {
+    map: {
+        path: string;
+        metersPerPixel: number;
+        width: number;
+        height: number;
+        dz: { x: number; y: number };
+    };
+    winds: Array<{
+        altitudeDescr: string;
+        speed: number;
+        direction: number;
+    }>;
+    exitCircle: Circle;
+    deplCircle: Circle;
+    spot: {
+        heading: number;
+        longitudinalOffset: number;
+        transverseOffset: number;
+    };
+    redLight: {
+        bearing: number;
+        distance: number;
+    };
+    timeBetweenGroups: number;
+    jumpRunDuration: number;
+    time: Date;
+};
+
+type Circle = {
+    x: number;
+    y: number;
+    radius: number;
+};
