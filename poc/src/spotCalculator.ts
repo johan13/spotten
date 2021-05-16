@@ -57,8 +57,6 @@ export class SpotCalculator {
         let radius = 0;
         while (altitude < this.config.deplAltitude) {
             const wind = this.wind.at(altitude);
-            x += Math.sin(wind.direction) * wind.speed * timeStep;
-            y += Math.cos(wind.direction) * wind.speed * timeStep;
             if (altitude < this.config.finalAltitude) {
                 const { speed, direction } = getSpeedOverGround(
                     landingDirection,
@@ -68,6 +66,8 @@ export class SpotCalculator {
                 x -= speed * Math.sin(direction) * timeStep;
                 y -= speed * Math.cos(direction) * timeStep;
             } else {
+                x += wind.speed * Math.sin(wind.direction) * timeStep;
+                y += wind.speed * Math.cos(wind.direction) * timeStep;
                 radius += this.config.horizontalCanopySpeed * timeStep;
             }
             altitude += this.config.verticalCanopySpeed * timeStep;
