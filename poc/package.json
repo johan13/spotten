@@ -4,6 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
+        "eslint": "eslint -f unix --fix src",
         "prettier": "prettier -w src",
         "start": "ts-node src/main.ts",
         "test": "mocha -r ts-node/register \"src/**/*.test.ts\""
@@ -21,6 +22,11 @@
     },
     "devDependencies": {
         "@types/mocha": "^8.2.2",
+        "@typescript-eslint/eslint-plugin": "^4.23.0",
+        "@typescript-eslint/parser": "^4.23.0",
+        "eslint": "^7.26.0",
+        "eslint-plugin-import": "^2.23.2",
+        "eslint-plugin-simple-import-sort": "^7.0.0",
         "mocha": "^8.4.0"
     }
 }

@@ -1,0 +1,38 @@
+root: true
+parser: "@typescript-eslint/parser"
+parserOptions:
+    project: ./tsconfig.json
+plugins:
+    - "@typescript-eslint"
+    - simple-import-sort
+    - import
+extends:
+    - eslint:recommended
+    - plugin:@typescript-eslint/recommended
+    - plugin:@typescript-eslint/recommended-requiring-type-checking
+rules:
+    # Disable/soften rules:
+    "@typescript-eslint/explicit-module-boundary-types": off
+    "@typescript-eslint/restrict-template-expressions": off
+
+    # Sort imports
+    "simple-import-sort/imports": [error, { groups: [["^\\u0000", "^@?\\w", "^", "^\\."]] }]
+    "import/first": error
+    "import/newline-after-import": error
+
+    # Enable additional rules:
+    "@typescript-eslint/array-type": [error, { default: array-simple }]
+    "@typescript-eslint/explicit-member-accessibility": error
+    "@typescript-eslint/member-ordering": error
+    "@typescript-eslint/no-implicit-any-catch": error
+    "@typescript-eslint/no-unnecessary-boolean-literal-compare": error
+    "@typescript-eslint/no-unnecessary-condition": error
+    "@typescript-eslint/prefer-readonly": error
+    "@typescript-eslint/promise-function-async": error
+    consistent-return: error
+    eqeqeq: error
+    no-console: error
+    no-duplicate-imports: error
+    no-return-await: error
+    object-shorthand: error
+    radix: error
