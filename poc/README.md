@@ -9,7 +9,7 @@ npm start
 1. The output should now be written to `spot.pdf`.
 
 ## Debugging with VSCode
-Add these configurations to launch.json (inside the `configurations` array):
+Add these configurations to launch.json, inside the `configurations` array:
 ```json
 {
     "type": "pwa-node",

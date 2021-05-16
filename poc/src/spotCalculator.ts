@@ -37,10 +37,6 @@ export class SpotCalculator {
 
         const exitWind = this.wind.at(this.config.exitAltitude);
         const sog = getSpeedOverGround(spot.track, this.config.jumpRunTAS, exitWind).speed;
-        const redLight = {
-            bearing: normalizeAngle(spot.track + Math.PI),
-            distance: spot.longitudinalOffset + this.config.redLightTime * sog,
-        };
 
         spot.longitudinalOffset -= this.config.greenLightTime * sog;
         spot.longitudinalOffset = nm2m(0.1) * Math.round(spot.longitudinalOffset / nm2m(0.1));
@@ -51,7 +47,7 @@ export class SpotCalculator {
             transverseOffset: spot.transverseOffset,
             deplCircle,
             exitCircle,
-            redLight,
+            redLight: this.calculateRedLight(spot.track, spot.longitudinalOffset, sog),
             timeBetweenGroups: this.getTimeBetweenGroups(spot.track),
             jumpRunDuration: sog > 0 ? spot.jumpRunLength / sog : 0,
         };
@@ -125,7 +121,7 @@ export class SpotCalculator {
         let transverseOffset = this.fixedTransverseOffset;
         if (transverseOffset === undefined) {
             const windDirection = this.wind.at(this.config.exitAltitude).direction;
-            track ??= deg2rad(5) * Math.round(windDirection / deg2rad(5));
+            track ??= normalizeAngle(deg2rad(5) * Math.round(windDirection / deg2rad(5)));
 
             // Find the transverseOffset that puts the track straight through the circle's center.
             transverseOffset = circle.x * Math.cos(track) - circle.y * Math.sin(track);
@@ -135,7 +131,7 @@ export class SpotCalculator {
             track =
                 Math.atan2(circle.x, circle.y) -
                 Math.asin(transverseOffset / Math.sqrt(circle.x ** 2 + circle.y ** 2));
-            track = deg2rad(5) * Math.round(normalizeAngle(track) / deg2rad(5));
+            track = normalizeAngle(deg2rad(5) * Math.round(track / deg2rad(5)));
         }
 
         // Find the longitudinalOffset that puts the exit point right at the edge of the circle.
@@ -149,6 +145,15 @@ export class SpotCalculator {
         }
 
         return { track, longitudinalOffset, transverseOffset, jumpRunLength: 2 * halfJumpRun };
+    }
+
+    private calculateRedLight(track: number, longitudinalOffset: number, sog: number) {
+        return {
+            bearing: normalizeAngle(track + Math.PI),
+            distance:
+                nm2m(0.1) *
+                Math.round((longitudinalOffset + this.config.redLightTime * sog) / nm2m(0.1)),
+        };
     }
 
     private getTimeBetweenGroups(track: number) {

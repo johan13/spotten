@@ -7,7 +7,7 @@ export function renderToFile(input: Input, filePath: string) {
 }
 
 class PdfGenerator {
-    private readonly mapScaleDenominator = 25000;
+    private readonly mapScale = 1 / 25000;
     private readonly doc: typeof PDFDocument;
     private readonly width: number;
     private readonly height: number;
@@ -89,7 +89,10 @@ class PdfGenerator {
         this.doc.save().translate(10, 15);
 
         // Gray circle with tick marks
-        this.doc.circle(0, 0, 10).lineWidth(0.4).stroke("#d8d8d8");
+        this.doc
+            .circle(0, 0, 10)
+            .lineWidth(0.3)
+            .stroke("#d0d0d0");
         for (let i = 0; i < 8; i++) {
             this.doc.rotate(45).moveTo(0, 10).lineTo(0, 8.5).stroke();
         }
@@ -117,12 +120,12 @@ class PdfGenerator {
 
     private renderJumperInfo() {
         this.doc.fontSize(5);
-        const text = `Time between groups: ${this.data.timeBetweenGroups} s`;
-        this.jumperInfoWidth = this.doc.widthOfString(text) + 0.5;
+        const text = `At least ${this.data.timeBetweenGroups} s between groups`;
+        this.jumperInfoWidth = this.doc.widthOfString(text) + 1;
         this.jumperInfoHeight = 9.5;
 
         this.doc
-            .text(text, this.windInfoWidth, this.height - this.jumperInfoHeight + 1)
+            .text(text, this.windInfoWidth + 0.3, this.height - this.jumperInfoHeight + 1)
             .fontSize(3)
             .text(`The jump run is approximately ${this.data.jumpRunDuration.toFixed(0)} s.`);
     }
@@ -161,7 +164,7 @@ class PdfGenerator {
         this.doc
             .save()
             .translate(this.width / 2, this.height / 2)
-            .scale(1000 / this.mapScaleDenominator)
+            .scale(1000 * this.mapScale)
             .image(path, -dz.x * metersPerPixel, -dz.y * metersPerPixel, {
                 width: width * metersPerPixel,
                 height: height * metersPerPixel,
@@ -170,7 +173,7 @@ class PdfGenerator {
         this.renderSpot();
         this.renderScale();
         this.traceOutline();
-        this.doc.lineWidth(0.3).stroke("#d8d8d8");
+        this.doc.lineWidth(0.25).stroke("#e0e0e0");
         this.doc.restore();
     }
 
@@ -196,7 +199,7 @@ class PdfGenerator {
         this.doc
             .save()
             .translate(this.width / 2, this.height / 2)
-            .scale(1000 / this.mapScaleDenominator, -1000 / this.mapScaleDenominator);
+            .scale(1000 * this.mapScale, -1000 * this.mapScale);
 
         // Draw the circles
         this.doc
@@ -234,11 +237,12 @@ class PdfGenerator {
     }
 
     private renderScale() {
-        const denominator = Intl.NumberFormat("sv-SE").format(this.mapScaleDenominator);
+        const numFmt = Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
+        const denominator = numFmt.format(1 / this.mapScale);
         this.doc
             .save()
             .translate(this.width, this.height - this.footerHeight)
-            .scale(1000 / this.mapScaleDenominator)
+            .scale(1000 * this.mapScale)
             .translate(-1120, -150);
 
         // Tick marks
@@ -285,8 +289,7 @@ class PdfGenerator {
 
 function angleStr(deg: number) {
     deg = Math.round(deg);
-    while (deg <= 0) deg += 360;
-    while (deg > 360) deg -= 360;
+    if (deg <= 0) deg += 360; // North is "360" - not "000".
     return `00${deg}`.slice(-3) + "°";
 }
 
