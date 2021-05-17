@@ -89,10 +89,7 @@ class PdfGenerator {
         this.doc.save().translate(10, 15);
 
         // Gray circle with tick marks
-        this.doc
-            .circle(0, 0, 10)
-            .lineWidth(0.3)
-            .stroke("#d0d0d0");
+        this.doc.circle(0, 0, 10).lineWidth(0.3).stroke("#d0d0d0");
         for (let i = 0; i < 8; i++) {
             this.doc.rotate(45).moveTo(0, 10).lineTo(0, 8.5).stroke();
         }
@@ -120,14 +117,11 @@ class PdfGenerator {
 
     private renderJumperInfo() {
         this.doc.fontSize(5);
-        const text = `At least ${this.data.timeBetweenGroups} s between groups`;
+        const text = `${this.data.timeBetweenGroups} seconds between groups`;
         this.jumperInfoWidth = this.doc.widthOfString(text) + 1;
-        this.jumperInfoHeight = 9.5;
+        this.jumperInfoHeight = this.doc.heightOfString(text);
 
-        this.doc
-            .text(text, this.windInfoWidth + 0.3, this.height - this.jumperInfoHeight + 1)
-            .fontSize(3)
-            .text(`The jump run is approximately ${this.data.jumpRunDuration.toFixed(0)} s.`);
+        this.doc.text(text, this.windInfoWidth + 0.3, this.height - this.jumperInfoHeight + 1);
     }
 
     private renderFooter() {

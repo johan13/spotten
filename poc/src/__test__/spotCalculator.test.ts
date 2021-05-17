@@ -15,6 +15,8 @@ describe("SpotCalculator", () => {
             transverseOffset: 0,
             deplCircle: { x: 0, y: 0, radius: 0 },
             exitCircle: { x: 0, y: 0, radius: 0 },
+            redLight: { bearing: Math.PI, distance: 0 },
+            timeBetweenGroups: Infinity,
             jumpRunDuration: 0,
         });
     });
