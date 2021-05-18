@@ -1,0 +1,23 @@
+{
+    "name": "spotten",
+    "version": "1.0.0",
+    "description": "Skydiving exit-point calculator",
+    "main": "index.js",
+    "scripts": {
+        "deploy": "gh-pages -d web -r git@github.com:spotten-nu/spotten-nu.github.io.git -b master -f"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/johan13/spotten.git"
+    },
+    "keywords": [],
+    "author": "Johan Levin <johan13@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/johan13/spotten/issues"
+    },
+    "homepage": "https://spotten.nu",
+    "devDependencies": {
+        "gh-pages": "^3.1.0"
+    }
+}
