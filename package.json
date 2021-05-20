@@ -4,7 +4,8 @@
     "description": "Skydiving exit-point calculator",
     "main": "index.js",
     "scripts": {
-        "deploy": "gh-pages -d web -r git@github.com:spotten-nu/spotten-nu.github.io.git -b master -f"
+        "build": "cp -r web build",
+        "test": "echo TODO: Run tests here"
     },
     "repository": {
         "type": "git",
@@ -16,8 +17,5 @@
     "bugs": {
         "url": "https://github.com/johan13/spotten/issues"
     },
-    "homepage": "https://spotten.nu",
-    "devDependencies": {
-        "gh-pages": "^3.1.0"
-    }
+    "devDependencies": {}
 }

@@ -1,0 +1,37 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Test and build
+        run: |
+          npm install
+          npm test
+          npm run build
+      - name: Deploy to GitHub Pages
+        run: |
+          eval $(ssh-agent)
+          echo "${{ secrets.DEPLOY_KEY }}" | ssh-add -
+          cd build
+          git config --global init.defaultBranch master
+          git config --global user.email "noreply@spotten.nu"
+          git config --global user.name "CI/CD"
+          git init
+          git add .
+          git commit -m "Automatic deployment"
+          git remote add origin git@github.com:spotten-nu/spotten-nu.github.io.git
+          git push -f origin master
