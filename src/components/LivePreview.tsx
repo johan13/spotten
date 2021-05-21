@@ -14,7 +14,7 @@ function LivePreview({ state, spot }: LivePreviewProps) {
           position: "fixed",
           width: "100%",
           height: "100%",
-          backgroundImage: "url(/maps/vargarda.png)",
+          backgroundImage: `url(${state.dropzone.url})`,
           backgroundPosition: "center",
           backgroundSize: "cover",
           filter: "blur(calc(0.4vw))",
@@ -22,6 +22,7 @@ function LivePreview({ state, spot }: LivePreviewProps) {
       ></div>
       <div style={{ position: "absolute", top: 50, left: 300 }}>
         <h1>TODO: Live map preview</h1>
+        <p>For now, here is the raw data:</p>
         <pre style={{ fontSize: 10 }}>
           {JSON.stringify({ ...state, spot }, undefined, 4)}
         </pre>

@@ -1,4 +1,5 @@
 import dropzones from "./dropzones";
+import { defaultConfig } from "./calculation/spotCalculator";
 
 export type Wind = { direction: number; speed: number };
 export type AppState = typeof initialState;
@@ -19,18 +20,7 @@ export const initialState = {
     offTrack: undefined as undefined | number,
     distance: undefined as undefined | number,
   },
-  config: {
-    exitAltitude: 4000,
-    deplAltitude: 700,
-    finalAltitude: 100,
-    jumpRunTAS: 45,
-    redLightTime: 120,
-    greenLightTime: 10,
-    horizontalCanopySpeed: 9,
-    verticalCanopySpeed: 4,
-    metersBetweenGroups: 250,
-    minTimeBetweenGroups: 5,
-  },
+  config: defaultConfig,
 };
 
 export type Action =

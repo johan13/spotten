@@ -32,6 +32,13 @@ const dropzones: Dropzone[] = [
       width: 1436,
       height: 1000,
   },
+  {
+    id: "koster",
+    name: "Koster",
+    url: "/maps/koster.png",
+    width: 1436,
+    height: 1000,
+  },
 ];
 
 export default dropzones;

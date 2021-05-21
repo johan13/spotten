@@ -120,7 +120,8 @@ export class SpotCalculator {
     private calculateSpot(circle: Circle) {
         let track = this.fixedTrack;
         let transverseOffset = this.fixedTransverseOffset;
-        if (transverseOffset === undefined) {
+      if (transverseOffset === undefined) {
+          // TODO: Should we use the wind at deployment altitude instead?
             const windDirection = this.wind.at(this.config.exitAltitude).direction;
             track = track ?? normalizeAngle(deg2rad(5) * Math.round(windDirection / deg2rad(5)));
 
@@ -198,12 +199,12 @@ function getDragAcceleration(velocity: number, altitude: number) {
     return 0.003 * airDensity * velocity ** 2;
 }
 
-const defaultConfig: Config = {
+export const defaultConfig: Config = {
     exitAltitude: 4000,
     deplAltitude: 700,
     finalAltitude: 100,
-    jumpRunTAS: kt2ms(90),
-    redLightTime: 120,
+    jumpRunTAS: kt2ms(93),
+    redLightTime: 150, // TODO: We want 2 minutes, but the aircraft is flying >jumpRunTAS
     greenLightTime: 10,
     horizontalCanopySpeed: 9,
     verticalCanopySpeed: 4,
