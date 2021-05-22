@@ -32,6 +32,7 @@ class PdfGenerator {
             size: "a4",
             layout: "landscape",
             margin: (margin / 25.4) * 72,
+            info: { Title: "Spot", },
         });
         this.doc.pipe(stream);
 
@@ -96,7 +97,7 @@ class PdfGenerator {
     }) {
         this.doc.fontSize(3);
         this.doc.text(altitudeDescr, 0, 2.5, { width: 20, align: "center" });
-        this.doc.text(`${direction.toFixed(0)}° / ${speed.toFixed(0)}kt`, { width: 20, align: "center" });
+        this.doc.text(`${direction.toFixed(0)}° / ${speed.toFixed(0)} kt`, { width: 20, align: "center" });
 
         this.doc.save().translate(10.5, 19.5);
 
