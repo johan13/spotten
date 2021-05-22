@@ -121,7 +121,7 @@ export class SpotCalculator {
         let track = this.fixedTrack;
         let transverseOffset = this.fixedTransverseOffset;
       if (transverseOffset === undefined) {
-          // TODO: Should we use the wind at deployment altitude instead?
+            // TODO: Should we use the wind at deployment altitude instead?
             const windDirection = this.wind.at(this.config.exitAltitude).direction;
             track = track ?? normalizeAngle(deg2rad(5) * Math.round(windDirection / deg2rad(5)));
 

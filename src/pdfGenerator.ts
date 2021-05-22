@@ -73,26 +73,32 @@ class PdfGenerator {
     private renderWinds() {
         this.doc.fontSize(3);
         const winds = [...this.data.winds].reverse();
-        this.windInfoHeight = 0;
+        this.windInfoHeight = -1.5;
         this.windInfoWidth = 21;
         this.doc.save();
         this.doc.translate(0, this.height);
-        for (const { altitudeDescr: altitude, speed, direction } of winds) {
-            this.windInfoHeight += 25;
-            this.doc.translate(0, -25);
-            this.doc.fontSize(3);
-            this.doc.text(altitude, 0, 2, { width: 20, align: "center" });
-            this.renderOneWind(speed, direction);
+        for (const wind of winds) {
+            this.windInfoHeight += 30;
+            this.doc.translate(0, -30);
+            this.renderOneWind(wind);
         }
-        this.windInfoHeight += 4;
-        this.doc.translate(0, -3);
-        this.doc.fontSize(3);
-        this.doc.text("Wind [m/s]", 0, 0);
         this.doc.restore();
     }
 
-    private renderOneWind(knots: number, degrees: number) {
-        this.doc.save().translate(10, 15);
+    private renderOneWind({
+        altitudeDescr,
+        speed,
+        direction,
+    }: {
+        altitudeDescr: string,
+        speed: number,
+        direction: number,
+    }) {
+        this.doc.fontSize(3);
+        this.doc.text(altitudeDescr, 0, 2.5, { width: 20, align: "center" });
+        this.doc.text(`${direction.toFixed(0)}° / ${speed.toFixed(0)}kt`, { width: 20, align: "center" });
+
+        this.doc.save().translate(10.5, 19.5);
 
         // Gray circle with tick marks
         this.doc.circle(0, 0, 10).lineWidth(0.3).stroke("#d0d0d0");
@@ -101,20 +107,20 @@ class PdfGenerator {
         }
 
         // Numeric wind speed
-        const ms = kt2ms(knots);
+        const ms = kt2ms(speed);
         this.doc.fontSize(4).text(ms.toFixed(0), -5, -1.5, { width: 10, align: "center" });
 
         // Wind arrow
         if (ms >= 0.5) {
             this.doc
-                .rotate(degrees)
-                .moveTo(0, 3)
-                .lineTo(0, 9)
+                .rotate(direction)
+                .moveTo(0, -9.5)
+                .lineTo(0, -3.5)
                 .lineWidth(1)
                 .stroke("black")
-                .moveTo(0, 10)
-                .lineTo(-1.6, 7.5)
-                .lineTo(1.6, 7.5)
+                .moveTo(0, -2.5)
+                .lineTo(-1.6, -5)
+                .lineTo(1.6, -5)
                 .closePath()
                 .fill("black");
         }
