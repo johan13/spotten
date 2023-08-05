@@ -10,23 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           lfs: true
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 14.x
-      - name: Test and build
+          node-version: 20.x
+      - name: Build
         run: |
-          npm install
-          npm test
+          npm ci
           npm run build
       - name: Deploy to GitHub Pages
         run: |
           eval $(ssh-agent)
           echo "${{ secrets.DEPLOY_KEY }}" | ssh-add -
-          cd build
+          cd dist
           git config --global init.defaultBranch master
           git config --global user.email "noreply@spotten.nu"
           git config --global user.name "CI/CD"
