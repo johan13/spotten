@@ -1,4 +1,4 @@
-import { deg2rad, kt2ms, nm2m, normalizeAngle, normalizeAngleDiff } from "./utils";
+import { deg2rad, kt2mps, nm2m, normalizeAngle, normalizeAngleDiff } from "./utils";
 import { Wind, WindEstimator } from "./windEstimator";
 
 // Note:
@@ -88,7 +88,7 @@ export class SpotCalculator {
         }
         return this.allowedLandingDirections
             .map(ld => ({ ld, delta: Math.abs(normalizeAngleDiff(windDirection - ld)) }))
-            .sort((a, b) => a.delta - b.delta)[0].ld;
+            .sort((a, b) => a.delta - b.delta)[0]!.ld;
     }
 
     private calculateFreeFall() {
@@ -120,7 +120,7 @@ export class SpotCalculator {
     private calculateSpot(circle: Circle) {
         let track = this.fixedTrack;
         let transverseOffset = this.fixedTransverseOffset;
-      if (transverseOffset === undefined) {
+        if (transverseOffset === undefined) {
             // TODO: Should we use the wind at deployment altitude instead?
             const windDirection = this.wind.at(this.config.exitAltitude).direction;
             track = track ?? normalizeAngle(deg2rad(5) * Math.round(windDirection / deg2rad(5)));
@@ -203,7 +203,7 @@ export const defaultConfig: Config = {
     exitAltitude: 4000,
     deplAltitude: 700,
     finalAltitude: 100,
-    jumpRunTAS: kt2ms(93),
+    jumpRunTAS: kt2mps(93),
     redLightTime: 150, // TODO: We want 2 minutes, but the aircraft is flying >jumpRunTAS
     greenLightTime: 10,
     horizontalCanopySpeed: 9,
@@ -212,7 +212,7 @@ export const defaultConfig: Config = {
     minTimeBetweenGroups: 5,
 };
 
-type Input = {
+export type Input = {
     winds: Wind[];
     fixedTrack?: number | undefined;
     fixedTransverseOffset?: number;

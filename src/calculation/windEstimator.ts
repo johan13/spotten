@@ -10,16 +10,16 @@ export class WindEstimator {
         this.winds = [...winds].sort((a, b) => a.altitude - b.altitude);
     }
 
-    public at(altitude: number) {
-        if (altitude <= this.winds[0].altitude) {
-            return this.winds[0];
+    public at(altitude: number): Wind {
+        if (altitude <= this.winds[0]!.altitude) {
+            return this.winds[0]!;
         }
         for (let i = 1; i < this.winds.length; i++) {
-            if (altitude < this.winds[i].altitude) {
-                return this.interpolate(this.winds[i - 1], this.winds[i], altitude);
+            if (altitude < this.winds[i]!.altitude) {
+                return this.interpolate(this.winds[i - 1]!, this.winds[i]!, altitude);
             }
         }
-        return this.winds[this.winds.length - 1];
+        return this.winds[this.winds.length - 1]!;
     }
 
     private interpolate(lower: Wind, upper: Wind, altitude: number) {

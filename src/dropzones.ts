@@ -1,44 +1,44 @@
 export type Dropzone = {
-  id: string,
-  name: string,
-  allowedLandingDirections?: number[],
-  url: string,
-  width: number,
-  height: number,
+    name: string;
+    fixedLandingDirections?: number[];
+    mapPath: string;
+    width: number;
+    height: number;
+    metersPerPixel: number;
 };
 
-const dropzones: Dropzone[] = [
-  {
-      id: "vargarda",
-      name: "Vårgårda",
-      allowedLandingDirections: [40, 220],
-      url: "/maps/vargarda.png",
-      width: 1436,
-      height: 1000,
-  },
-  {
-      id: "nasinge",
-      name: "Näsinge",
-      allowedLandingDirections: [30, 210],
-      url: "/maps/nasinge.png",
-      width: 1436,
-      height: 1000,
-  },
-  {
-      id: "skovde",
-      name: "Skövde",
-      allowedLandingDirections: [10, 190],
-      url: "/maps/skovde.png",
-      width: 1436,
-      height: 1000,
-  },
-  {
-    id: "koster",
-    name: "Koster",
-    url: "/maps/koster.png",
-    width: 1436,
-    height: 1000,
-  },
+const dropzones: [Dropzone, ...Dropzone[]] = [
+    {
+        name: "Vårgårda",
+        fixedLandingDirections: [40, 220],
+        mapPath: "/maps/vargarda.png",
+        width: 1436,
+        height: 1000,
+        metersPerPixel: 5,
+    },
+    {
+        name: "Näsinge",
+        fixedLandingDirections: [30, 210],
+        mapPath: "/maps/nasinge.png",
+        width: 1436,
+        height: 1000,
+        metersPerPixel: 5,
+    },
+    {
+        name: "Skövde",
+        fixedLandingDirections: [10, 190],
+        mapPath: "/maps/skovde.png",
+        width: 1436,
+        height: 1000,
+        metersPerPixel: 5,
+    },
+    {
+        name: "Koster",
+        mapPath: "/maps/koster.png",
+        width: 1436,
+        height: 1000,
+        metersPerPixel: 5,
+    },
 ];
 
 export default dropzones;

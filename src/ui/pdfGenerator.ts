@@ -1,20 +1,71 @@
-import type PDFDocumentType from "pdfkit";
-import { kt2ms, nm2m } from "./calculation/utils";
-import BlobStream from "blob-stream";
+import blobStream from "blob-stream";
+import PDFDocument from "pdfkit";
+import { kt2mps, nm2m } from "../calculation/utils";
+import { Spot } from "./calculationAdapter";
+import { InputPanelState } from "./inputPanel";
 
-// We load the standalone version of PDFKit outside of webpack. (That was the
-// easiest way to get it browser compatible without ejecting create-react-app.)
-declare class PDFDocument extends PDFDocumentType { };
+export async function renderAsBlobURL(input: InputPanelState, spot: Spot) {
+    const mapResponse = await fetch(input.dropzone.mapPath);
+    const imageData = await mapResponse.arrayBuffer();
 
-export async function renderAsBlobURL(input: Input) {
-    const stream = BlobStream();
-    new PdfGenerator(input, stream);
-    return new Promise<string>(resolve => stream.on("finish", () => resolve(stream.toBlobURL("application/pdf"))));
+    const pdfInput: Input = {
+        map: {
+            imageData,
+            metersPerPixel: input.dropzone.metersPerPixel,
+            width: input.dropzone.width,
+            height: input.dropzone.height,
+            dz: { x: input.dropzone.width / 2, y: input.dropzone.height / 2 },
+        },
+        winds: [
+            {
+                altitudeDescr: "FL100",
+                speed: input.windFL100.speedKt,
+                direction: input.windFL100.directionDeg,
+            },
+            {
+                altitudeDescr: "2000 ft",
+                speed: input.wind2000ft.speedKt,
+                direction: input.wind2000ft.directionDeg,
+            },
+            {
+                altitudeDescr: "Ground",
+                speed: input.windGround.speedKt,
+                direction: input.windGround.directionDeg,
+            },
+        ],
+        exitCircle: {
+            x: nm2m(spot.exitCircle.xNm),
+            y: nm2m(spot.exitCircle.yNm),
+            radius: nm2m(spot.exitCircle.radiusNm),
+        },
+        deplCircle: {
+            x: nm2m(spot.deplCircle.xNm),
+            y: nm2m(spot.deplCircle.yNm),
+            radius: nm2m(spot.deplCircle.radiusNm),
+        },
+        spot: {
+            heading: spot.lineOfFlightDeg,
+            longitudinalOffset: spot.distanceNm,
+            transverseOffset: spot.offTrackNm,
+        },
+        redLight: {
+            bearing: spot.redLight.bearingDeg,
+            distance: spot.redLight.distanceNm,
+        },
+        timeBetweenGroups: spot.secondsBetweenGroups,
+        time: new Date(),
+    };
+
+    const stream = blobStream();
+    new PdfGenerator(pdfInput, stream);
+    return new Promise<string>(resolve =>
+        stream.on("finish", () => resolve(stream.toBlobURL("application/pdf"))),
+    );
 }
 
 class PdfGenerator {
     private readonly mapScale = 1 / 25000;
-    private readonly doc: PDFDocument;
+    private readonly doc: PDFKit.PDFDocument;
     private readonly width: number;
     private readonly height: number;
     private pilotInfoWidth = 0;
@@ -32,7 +83,7 @@ class PdfGenerator {
             size: "a4",
             layout: "landscape",
             margin: (margin / 25.4) * 72,
-            info: { Title: "Spot", },
+            info: { Title: "Spot" },
         });
         this.doc.pipe(stream);
 
@@ -91,13 +142,16 @@ class PdfGenerator {
         speed,
         direction,
     }: {
-        altitudeDescr: string,
-        speed: number,
-        direction: number,
+        altitudeDescr: string;
+        speed: number;
+        direction: number;
     }) {
         this.doc.fontSize(3);
         this.doc.text(altitudeDescr, 0, 2.5, { width: 20, align: "center" });
-        this.doc.text(`${direction.toFixed(0)}° / ${speed.toFixed(0)} kt`, { width: 20, align: "center" });
+        this.doc.text(`${direction.toFixed(0)}° / ${speed.toFixed(0)} kt`, {
+            width: 20,
+            align: "center",
+        });
 
         this.doc.save().translate(10.5, 19.5);
 
@@ -108,11 +162,11 @@ class PdfGenerator {
         }
 
         // Numeric wind speed
-        const ms = kt2ms(speed);
-        this.doc.fontSize(4).text(ms.toFixed(0), -5, -1.5, { width: 10, align: "center" });
+        const mps = kt2mps(speed);
+        this.doc.fontSize(4).text(mps.toFixed(0), -5, -1.5, { width: 10, align: "center" });
 
         // Wind arrow
-        if (ms >= 0.5) {
+        if (mps >= 0.5) {
             this.doc
                 .rotate(direction)
                 .moveTo(0, -9.5)
@@ -300,7 +354,7 @@ function angleStr(deg: number) {
     return `00${deg}`.slice(-3) + "°";
 }
 
-export type Input = {
+type Input = {
     map: {
         imageData: ArrayBuffer;
         metersPerPixel: number;
@@ -325,7 +379,6 @@ export type Input = {
         distance: number;
     };
     timeBetweenGroups: number;
-    jumpRunDuration: number;
     time: Date;
 };
 
